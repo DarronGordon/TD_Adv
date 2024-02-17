@@ -4,150 +4,63 @@
 import * as PIXI from "pixi.js";
 //import Victor from "victor";
 //import Matter from "matter-js";
-import gsap from "gsap";
-
-//#region --- INNIT ---
-let canvasSizeX = (720);
-let canvasSizeY = (720);
-const reels = [];
-
-const canvas = document.getElementById("mycanvas");
+// Initialize Pixi application
 const app = new PIXI.Application({
-    //view: canvas,
-
-    backgroundColor: 0x88cc00,
-    transparent: .5,
-    width: canvasSizeX,
-    height: canvasSizeY
+    width: 800,
+    height: 600,
+    backgroundColor: 0x1099bb,
 });
-globalThis.__PIXI_APP__ = app;
-
 document.body.appendChild(app.view);
 
-//#endregion
+// Create a container for the player character
+const playerContainer = new PIXI.Container();
+app.stage.addChild(playerContainer);
 
-const player = {
+// Load player sprite
+PIXI.loader.add('player', 'path/to/playerSprite.png').load(() => {
+    const playerSprite = new PIXI.Sprite(PIXI.loader.resources['player'].texture);
+    // Set initial position of the player
+    playerSprite.x = app.screen.width / 2;
+    playerSprite.y = app.screen.height / 2;
+    // Set anchor point to the center of the sprite
+    playerSprite.anchor.set(0.5);
+    // Add player sprite to the container
+    playerContainer.addChild(playerSprite);
 
-    score: 0,
-    ammo: 10,
-    fireRate: .8,
-    speed: 2,
+    // Set up keyboard input
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+    });
 
+    // Define player movement speed
+    const speed = 5;
 
-    OnSnackEaten: () => {
-        this.score++;
+    // Game loop
+    app.ticker.add(() => {
+        // Move player based on keyboard input
+        if (keys['w']) { // Move up
+            playerSprite.y -= speed;
+        }
+        if (keys['s']) { // Move down
+            playerSprite.y += speed;
+        }
+        if (keys['a']) { // Move left
+            playerSprite.x -= speed;
+        }
+        if (keys['d']) { // Move right
+            playerSprite.x += speed;
+        }
 
-    },
-
-    createPlayer: () => {
-
-        const playerContainer = new PIXI.Container();
-        const playerSegmet = new PIXI.Graphics();
-        playerSegmet.beginFill(0x8080ff);
-        playerSegmet.drawRect(0, 0, 40, 40);
-        playerContainer.addChild(playerSegmet);
-
-        player.playerContainer = playerContainer;
-
-        app.stage.addChild(playerContainer);
-        return player.playerContainer;
-    }
-
-}
-
-player.createPlayer();
-
-
-function testForCollision(obj1, obj2) {
-    const bounds1 = obj1.getBounds();
-    const bounds2 = obj2.getBounds();
-
-    return bounds1.x < bounds2.x + bounds2.width
-        && bounds1.x + bounds1.width > bounds2.x
-        && bounds1.y < bounds2.y + bounds2.height
-        && bounds1.y + bounds1.height > bounds2.y;
-}
-
-function lerp(a1, a2, t) {
-    return a1 * (1 - t) + a2 * t;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Set UP key input///////
-let xDir = 0;
-let yDir = 0;
-
-document.onkeydown = function (e) {
-    switch (e.key) {
-        case "a":
-            xDir = -1;
-            yDir = 0;
-            break;
-        case 'd':
-            xDir = 1;
-            yDir = 0
-            break;
-        case 'w':
-            yDir = -1;
-            xDir = 0;
-            break; a
-        case 's':
-            yDir = 1;
-            xDir = 0;
-            break;
-        default:
-            break;
-    }
-    console.log(xDir + " " + yDir);
-}
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MOVE Player
-app.ticker.add((delta) => {
-    if (player.playerContainer != null) {
-        player.playerContainer.x = player.playerContainer.x + xDir * player.speed * delta;
-        player.playerContainer.y = player.playerContainer.y + yDir * player.speed * delta;
-    }
-
+        // Ensure player stays within the bounds of the screen
+        const minX = playerSprite.width / 2;
+        const maxX = app.screen.width - playerSprite.width / 2;
+        const minY = playerSprite.height / 2;
+        const maxY = app.screen.height - playerSprite.height / 2;
+        playerSprite.x = Math.min(Math.max(playerSprite.x, minX), maxX);
+        playerSprite.y = Math.min(Math.max(playerSprite.y, minY), maxY);
+    });
 });
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//create food
-
-const snack = new PIXI.Graphics();
-
-snack.beginFill(0xff1a75);
-snack.drawCircle(0, 0, 10);
-snack.endFill();
-
-app.stage.addChild(snack);
-console.log(snack);
-
-app.ticker.add((delta) => {
-    if (testForCollision(snack, player.playerContainer)) {
-        console.log('should eat');
-
-        //Move snack
-        moveSnackPosition();
-
-        //+1 to snake
-        addToPlayerSize();
-
-    }
-});
-///////////////////////////////////////////////
-///Reposition Snack
-
-const moveSnackPosition = function () {
-    snack.x = Math.random() * canvasSizeX;
-    snack.y = Math.random() * canvasSizeY;
-}
-
-//ADD TO SNAKE SIZZE AND REBUILD
-
-const addToPlayerSize = function () {
-    player.size++;
-}
-
