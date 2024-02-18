@@ -1,8 +1,8 @@
 body {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    align-content: center;
+    align-items: left;
+    justify-content: left;
+    align-content: left;
     background-color: rgb(41, 41, 41);
     text-align: center;
 }
